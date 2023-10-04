@@ -1,6 +1,8 @@
 import 'package:chat_voice_ai/feature_box.dart';
 import 'package:chat_voice_ai/pallete.dart';
 import 'package:flutter/material.dart';
+import 'package:speech_to_text/speech_recognition_result.dart';
+import 'package:speech_to_text/speech_to_text.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -10,6 +12,39 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+  final speechToText = SpeechToText();
+  String lastWords = '';
+  @override
+  void initState() {
+    super.initState();
+    initSpeechTextTo();
+  }
+
+  Future<void> initSpeechTextTo() async {
+    await speechToText.initialize();
+    setState(() {});
+  }
+
+  Future<void> startListening() async {
+    await speechToText.listen(onResult: onSpeechResult);
+    setState(() {});
+  }
+
+  Future<void> stopListening() async {
+    await speechToText.stop();
+    setState(() {});
+  }
+
+  void onSpeechResult(SpeechRecognitionResult result) {
+    setState(() {
+      lastWords = result.recognizedWords;
+    });
+  }
+  @override
+  void dispose() {
+    super.dispose();
+    speechToText.stop();
+  }
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -105,7 +140,15 @@ class _HomePageState extends State<HomePage> {
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () {},
+        onPressed: ()async {
+          if(await speechToText.hasPermission && speechToText.isNotListening){
+            await startListening();
+          }else if(speechToText.isListening){
+            await stopListening();
+          }else{
+            initSpeechTextTo() ;
+          }
+        },
         backgroundColor: Pallete.firstSuggestionBoxColor,
         child: const Icon(Icons.mic),
       ),
